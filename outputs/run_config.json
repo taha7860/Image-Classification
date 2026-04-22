@@ -1,0 +1,25 @@
+{
+  "args": {
+    "data_dir": "data",
+    "output_dir": "outputs",
+    "preset": "smoke",
+    "epochs": "1",
+    "val_size": "5000",
+    "seed": "42",
+    "num_workers": "0",
+    "max_train_samples": "1000",
+    "max_val_samples": "500",
+    "max_test_samples": "500",
+    "device": "cpu"
+  },
+  "configs": [
+    {
+      "name": "smoke_cnn",
+      "model": "cnn",
+      "learning_rate": 0.001,
+      "batch_size": 32,
+      "dropout": 0.25,
+      "augmentation": true
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+run,epoch,train_loss,train_top1,train_top5,val_loss,val_top1,val_top5
+smoke_cnn,1,4.827333686828613,0.011,0.059,4.554194553375244,0.032,0.14

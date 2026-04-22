@@ -1,0 +1,2 @@
+name,model,learning_rate,batch_size,dropout,augmentation,epochs,best_val_top1,final_val_top1,test_top1,test_top5,test_loss,elapsed_seconds
+smoke_cnn,cnn,0.001,32,0.25,True,1,0.032,0.032,0.012,0.094,4.591851356506347,7.677653551101685
