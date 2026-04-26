@@ -2,22 +2,62 @@
   "args": {
     "data_dir": "data",
     "output_dir": "outputs",
-    "preset": "smoke",
-    "epochs": "1",
+    "preset": "coursework",
+    "epochs": "15",
     "val_size": "5000",
     "seed": "42",
-    "num_workers": "0",
-    "max_train_samples": "1000",
-    "max_val_samples": "500",
-    "max_test_samples": "500",
-    "device": "cpu"
+    "num_workers": "8",
+    "max_train_samples": "None",
+    "max_val_samples": "None",
+    "max_test_samples": "None",
+    "device": "cuda"
   },
   "configs": [
     {
-      "name": "smoke_cnn",
+      "name": "mlp_baseline",
+      "model": "mlp",
+      "learning_rate": 0.001,
+      "batch_size": 64,
+      "dropout": 0.25,
+      "augmentation": false
+    },
+    {
+      "name": "cnn_lr_1e-3",
       "model": "cnn",
       "learning_rate": 0.001,
-      "batch_size": 32,
+      "batch_size": 64,
+      "dropout": 0.25,
+      "augmentation": false
+    },
+    {
+      "name": "cnn_lr_5e-4",
+      "model": "cnn",
+      "learning_rate": 0.0005,
+      "batch_size": 64,
+      "dropout": 0.25,
+      "augmentation": false
+    },
+    {
+      "name": "cnn_dropout_0",
+      "model": "cnn",
+      "learning_rate": 0.0005,
+      "batch_size": 64,
+      "dropout": 0.0,
+      "augmentation": false
+    },
+    {
+      "name": "cnn_dropout_50",
+      "model": "cnn",
+      "learning_rate": 0.0005,
+      "batch_size": 64,
+      "dropout": 0.5,
+      "augmentation": false
+    },
+    {
+      "name": "cnn_augmented",
+      "model": "cnn",
+      "learning_rate": 0.0005,
+      "batch_size": 64,
       "dropout": 0.25,
       "augmentation": true
     }

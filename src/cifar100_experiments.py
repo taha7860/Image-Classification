@@ -104,7 +104,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--data-dir", type=Path, default=Path("data"))
     parser.add_argument("--output-dir", type=Path, default=Path("outputs"))
     parser.add_argument("--preset", choices=("smoke", "coursework", "full"), default="coursework")
-    parser.add_argument("--epochs", type=int, default=15)
+    parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--val-size", type=int, default=5000)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--num-workers", type=int, default=2)
@@ -246,6 +246,10 @@ def build_loaders(
     return train_loader, val_loader, test_loader, train_aug.classes
 
 
+def count_parameters(model: nn.Module) -> int:
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+
 def build_model(config: RunConfig) -> nn.Module:
     if config.model == "mlp":
         return MLP(config.dropout)
@@ -362,6 +366,8 @@ def train_one_run(
         args.num_workers,
     )
     model = build_model(config).to(device)
+    num_params = count_parameters(model)
+    print(f"  Parameters: {num_params:,}")
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=config.learning_rate)
 
@@ -404,6 +410,7 @@ def train_one_run(
 
     summary = {
         **asdict(config),
+        "parameters": num_params,
         "epochs": args.epochs,
         "best_val_top1": float(best_val_top1),
         "final_val_top1": float(history.iloc[-1]["val_top1"]),
@@ -482,6 +489,66 @@ def save_confusion_and_class_accuracy(
     plt.close(fig)
 
 
+def plot_accuracy_comparison(metrics_df: pd.DataFrame, output_dir: Path) -> None:
+    fig, ax = plt.subplots(figsize=(10, 5))
+    names = metrics_df["name"]
+    x = np.arange(len(names))
+    width = 0.35
+    ax.bar(x - width / 2, metrics_df["test_top1"], width, label="Top-1")
+    ax.bar(x + width / 2, metrics_df["test_top5"], width, label="Top-5")
+    ax.set_ylabel("Accuracy")
+    ax.set_title("Test Accuracy Comparison Across Runs")
+    ax.set_xticks(x)
+    ax.set_xticklabels(names, rotation=30, ha="right", fontsize=8)
+    ax.legend()
+    ax.grid(axis="y", alpha=0.25)
+    ax.set_ylim(0, 1)
+    fig.tight_layout()
+    fig.savefig(output_dir / "accuracy_comparison.png", dpi=180)
+    plt.close(fig)
+
+
+def plot_best_worst_classes(output_dir: Path, n: int = 10) -> None:
+    df = pd.read_csv(output_dir / "per_class_accuracy_best.csv")
+    worst = df.head(n)
+    best = df.tail(n)
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+    axes[0].barh(worst["class_name"], worst["accuracy"], color="salmon")
+    axes[0].set_xlabel("Accuracy")
+    axes[0].set_title(f"Bottom {n} Classes")
+    axes[0].set_xlim(0, 1)
+    axes[0].invert_yaxis()
+    axes[1].barh(best["class_name"], best["accuracy"], color="steelblue")
+    axes[1].set_xlabel("Accuracy")
+    axes[1].set_title(f"Top {n} Classes")
+    axes[1].set_xlim(0, 1)
+    axes[1].invert_yaxis()
+    fig.tight_layout()
+    fig.savefig(output_dir / "best_worst_classes.png", dpi=180)
+    plt.close(fig)
+
+
+def save_top_confused_pairs(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    class_names: list[str],
+    output_dir: Path,
+    n: int = 10,
+) -> None:
+    cm = confusion_matrix(y_true, y_pred, labels=list(range(len(class_names))))
+    np.fill_diagonal(cm, 0)
+    pairs = []
+    for i in range(len(class_names)):
+        for j in range(len(class_names)):
+            if cm[i, j] > 0:
+                pairs.append((class_names[i], class_names[j], int(cm[i, j])))
+    pairs.sort(key=lambda x: x[2], reverse=True)
+    top = pairs[:n]
+    pd.DataFrame(top, columns=["true_class", "predicted_class", "count"]).to_csv(
+        output_dir / "top_confused_pairs.csv", index=False
+    )
+
+
 def write_summary(best: dict[str, float | str | bool | int], output_dir: Path) -> None:
     lines = [
         "# CIFAR-100 Experiment Summary",
@@ -540,15 +607,21 @@ def main() -> None:
     metrics_df = pd.DataFrame(metrics).sort_values("best_val_top1", ascending=False)
     metrics_df.to_csv(args.output_dir / "metrics.csv", index=False, quoting=csv.QUOTE_MINIMAL)
     plot_learning_curves(histories, args.output_dir)
+    plot_accuracy_comparison(metrics_df, args.output_dir)
 
     if best_payload is not None:
         best_summary, y_true, y_pred, class_names = best_payload
         save_confusion_and_class_accuracy(y_true, y_pred, class_names, args.output_dir)
+        plot_best_worst_classes(args.output_dir)
+        save_top_confused_pairs(y_true, y_pred, class_names, args.output_dir)
         write_summary(best_summary, args.output_dir)
 
     print("\nFinished. Key files:")
     print(f"- {args.output_dir / 'metrics.csv'}")
     print(f"- {args.output_dir / 'learning_curves.png'}")
+    print(f"- {args.output_dir / 'accuracy_comparison.png'}")
+    print(f"- {args.output_dir / 'best_worst_classes.png'}")
+    print(f"- {args.output_dir / 'top_confused_pairs.csv'}")
     print(f"- {args.output_dir / 'confusion_matrix_best.png'}")
     print(f"- {args.output_dir / 'run_summary.md'}")
 
