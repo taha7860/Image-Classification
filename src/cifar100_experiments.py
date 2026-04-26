@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Train and compare CIFAR-100 models for COMP34212 coursework analysis."""
+"""Train and compare CIFAR-100 models for analysis."""
 
 from __future__ import annotations
 

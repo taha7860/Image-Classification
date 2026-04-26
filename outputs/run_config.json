@@ -3,7 +3,7 @@
     "data_dir": "data",
     "output_dir": "outputs",
     "preset": "coursework",
-    "epochs": "15",
+    "epochs": "50",
     "val_size": "5000",
     "seed": "42",
     "num_workers": "8",

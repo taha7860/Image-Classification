@@ -1,0 +1,11 @@
+true_class,predicted_class,count
+tulip,poppy,25
+maple_tree,oak_tree,24
+man,boy,23
+girl,woman,21
+couch,bed,20
+girl,boy,20
+baby,boy,19
+man,woman,17
+maple_tree,willow_tree,17
+seal,otter,17

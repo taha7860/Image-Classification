@@ -1,7 +1,5 @@
 # Report Planning Notes
 
-Do not paste these notes as the report. Use them to structure your own writing and connect your actual results to the marking criteria.
-
 ## Suggested Page Budget
 
 - Introduction and robotics context: 0.5 page.
